@@ -1,0 +1,138 @@
+#!/bin/bash
+#
+# Copyright 2020 Azul Systems, Inc. All rights reserved.
+# Use of this source code is governed by the 3-Clause BSD
+# license that can be found in the LICENSE file.
+#
+
+MYDIR=$(cd $(dirname $0) && pwd -P)
+
+invoke() {
+  cat <<- EOF
+	- name: ScanJVM Status
+	  hosts: all
+	  gather_facts: no
+	  force_handlers: no
+	
+	  tasks:
+	    - name: Upload jdowser utility
+	      copy: src=${MYDIR}/jdowser dest=.cache/jdowser/ mode=0755
+	
+	    - name: Invoke jdowser utility "$@"
+	      command: ".cache/jdowser/jdowser -${FMT} ${WAIT} $@"
+	      ignore_errors: yes
+	      register: jdowser1
+	EOF
+  TASK=jdowser1
+}
+
+async() {
+  cat <<- EOF
+	      async: 1
+	      poll: 0
+
+	    - name: Invoke jdowser status
+	      command: ".cache/jdowser/jdowser -${FMT} status"
+	      ignore_errors: yes
+	      register: jdowser2
+	EOF
+  TASK=jdowser2
+}
+
+collect_output() {
+  cat <<- EOF
+	    - local_action:
+	        module: copy
+	        content: "{{ groups['all'] | map('extract', hostvars, '${TASK}') | map(attribute='stdout') | join('\n') }}"
+	        dest: ${OUTPUT}
+	      run_once: true
+	EOF
+}
+
+yml_start() {
+  invoke -root=/ -nojvmrun -${FMT} start
+  [ -n "${WAIT}" ] || async
+  collect_output
+}
+
+yml_stop() {
+  invoke -${FMT} stop
+  collect_output
+}
+
+yml_status() {
+  invoke -${FMT} status
+  collect_output
+}
+
+yml_report() {
+  invoke -${FMT} report
+  collect_output
+}
+
+check() {
+  f=$1
+  shift
+  which $f &>/dev/null || { echo "$f is required and not found"; echo "$@"; exit 1; }
+}
+
+[ "-version" != "$1" ] || {
+   echo "`basename $0` version: %VERSION%"
+   exit 0
+}
+
+[ $# -gt 2 ] || { cat <<- EOF
+	Usage: `basename $0` -version
+	       `basename $0` [ansible args] start|stop|status|report [-csv] [-wait]
+	EOF
+	exit 1
+}
+
+declare -a new_args
+WAIT=
+FMT=json
+cmd=
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    start|stop|status|report)
+           cmd=$1 ;;
+    -wait) WAIT=-wait ;;
+     -csv) FMT=csv ;;
+        *) new_args="$new_args \"$1\"" ;;
+  esac
+  shift
+done
+
+eval set -- ${new_args}
+
+check ansible-playbook "Refer to: https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html"
+
+[ "${FMT}" == "csv" ] || check jq
+
+ANSIBLE_OUTPUT=$(mktemp)
+OUTPUT=$(mktemp)
+
+trap on_exit INT TERM QUIT HUP EXIT
+on_exit() {
+  rm -f ${ANSIBLE_OUTPUT}
+  rm -f ${OUTPUT}
+}
+
+
+declare -f yml_$cmd &>/dev/null || { echo "Unknown command: $cmd" >&2; exit; }
+ansible-playbook "$@" -f 10 <(yml_${cmd}) > ${ANSIBLE_OUTPUT} 2>&1
+
+if [ $? -eq 0 ]; then
+  if [ "json" == "${FMT}" ]; then
+    jq "[.]" "${OUTPUT}" | jq -M -s add
+  else
+    HDR=$(head -1 ${OUTPUT})
+    echo "${HDR}"
+    sed "/${HDR}/d" ${OUTPUT}
+    echo
+  fi
+else
+  [ ! -f "${ANSIBLE_OUTPUT}" ] || cat "${ANSIBLE_OUTPUT}"
+fi
+
