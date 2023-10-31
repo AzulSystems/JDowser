@@ -2,12 +2,11 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -107,7 +106,7 @@ func fileIsEmpty(f *os.File) bool {
 func findInUseLibJVM() map[string]int {
 	res := make(map[string]int)
 
-	procDir, e := ioutil.ReadDir("/proc")
+	procDir, e := os.ReadDir("/proc")
 	if e != nil {
 		return res
 	}

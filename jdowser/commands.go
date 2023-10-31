@@ -1,14 +1,9 @@
-// Copyright 2020 Azul Systems, Inc. All rights reserved.
-// Use of this source code is governed by the 3-Clause BSD
-// license that can be found in the LICENSE file.
-
-package main
+package jdowser
 
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"os/signal"
@@ -18,38 +13,14 @@ import (
 	"syscall"
 )
 
-var VERSION = "private build"
-
-func main() {
-	if config := InitConfig(); config != nil {
-		switch config.command {
-		case CMD_START:
-			cmdStart(config)
-			break
-		case CMD_STOP:
-			cmdStop(config)
-			break
-		case CMD_STATUS:
-			cmdStatus(config)
-			break
-		case CMD_REPORT:
-			cmdReport(config)
-			break
-		default:
-			fmt.Println("Unknown command:", config.command)
-			os.Exit(1)
-		}
-	}
-}
-
-func cmdReport(config *Config) {
+func CmdReport(config *Config) {
 	if config.wait {
 		lock, e := ScanLock(config)
 		if e != nil {
 			fmt.Println(e.Error())
 			return
 		}
-		e = lock.Lock()
+		lock.Lock()
 		defer lock.Unlock()
 	}
 
@@ -110,8 +81,8 @@ func unmarshalInfo(bytes []byte, inUseLibJVM map[string]int) (*JVMInstallation, 
 		return nil, e
 	}
 	for running := range inUseLibJVM {
-		stat1, e1 := os.Stat(running);
-		stat2, e2 := os.Stat(info.LibJVM);
+		stat1, e1 := os.Stat(running)
+		stat2, e2 := os.Stat(info.LibJVM)
 		if e1 == nil && e2 == nil && os.SameFile(stat1, stat2) {
 			info.RunningInstances += inUseLibJVM[running]
 		}
@@ -119,7 +90,7 @@ func unmarshalInfo(bytes []byte, inUseLibJVM map[string]int) (*JVMInstallation, 
 	return &info, nil
 }
 
-func cmdStart(config *Config) {
+func CmdStart(config *Config) {
 	cookie := os.Getenv("SCANJVM_COOKIE")
 
 	_ = os.Setenv("LC_ALL", "C")
@@ -131,7 +102,7 @@ func cmdStart(config *Config) {
 		signal.Notify(signals, syscall.SIGUSR1)
 
 		go func() {
-			_ = <-signals
+			<-signals
 			if status := ReadStatus(config); status != nil {
 				status.Report()
 			}
@@ -200,7 +171,7 @@ func cmdStart(config *Config) {
 	status := NewStatus(config)
 
 	go func() {
-		_ = <-signals
+		<-signals
 		status.SetState(Terminated)
 		lock.Unlock()
 		os.Exit(1)
@@ -215,14 +186,13 @@ func cmdStart(config *Config) {
 	e = findFiles(config, func(libjvm string) {
 		if info := InitJVMInstallation(libjvm, config); info != nil {
 			if txt, _ := json.Marshal(info); txt != nil {
-				_, _ = fmt.Fprintln(outFile, string(txt))
+				fmt.Fprintln(outFile, string(txt))
 			}
-		} else {
 		}
 	})
 
 	if e != nil {
-		_, _ = fmt.Fprintln(errFile, e.Error())
+		fmt.Fprintln(errFile, e.Error())
 		status.SetState(Error)
 	} else {
 		status.SetState(Finished)
@@ -233,7 +203,7 @@ func cmdStart(config *Config) {
 	}
 }
 
-func cmdStatus(config *Config) {
+func CmdStatus(config *Config) {
 	lock, e := ScanLock(config)
 	if e != nil {
 		fmt.Println(e.Error())
@@ -266,8 +236,8 @@ func cmdStatus(config *Config) {
 	status.Report()
 }
 
-func cmdStop(config *Config) {
-	procDir, e := ioutil.ReadDir("/proc")
+func CmdStop(config *Config) {
+	procDir, e := os.ReadDir("/proc")
 	if e != nil {
 		fmt.Println(e.Error())
 		return
@@ -281,9 +251,9 @@ func cmdStop(config *Config) {
 				continue
 			}
 			envFile := path.Join("/proc", pidStr, "environ")
-			_ = processStringsFromFile(envFile, 0, math.MaxInt64, func(str string) bool {
+			processStringsFromFile(envFile, 0, math.MaxInt64, func(str string) bool {
 				if strings.HasPrefix(str, config.cookie) {
-					_ = syscall.Kill(pid, syscall.SIGTERM)
+					syscall.Kill(pid, syscall.SIGTERM)
 					return false
 				}
 				return true
@@ -295,4 +265,3 @@ func cmdStop(config *Config) {
 		status.Report()
 	}
 }
-

@@ -2,14 +2,13 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -39,7 +38,7 @@ const (
 func NewStatus(config *Config) *Status {
 	hostname, _ := os.Hostname()
 	var args []string
-	if config.command == CMD_START {
+	if config.Command == CMD_START {
 		args = os.Args[1 : len(os.Args)-1]
 	}
 
@@ -55,7 +54,7 @@ func NewStatus(config *Config) *Status {
 }
 
 func ReadStatus(config *Config) *Status {
-	data, e := ioutil.ReadFile(config.StatusFilePath())
+	data, e := os.ReadFile(config.StatusFilePath())
 	if e != nil {
 		return nil
 	}
@@ -85,19 +84,16 @@ func (status *Status) SetState(state StateType) {
 	switch state {
 	case Running:
 		status.StartTime = time.Now().Unix()
-		break
 	case Finished, Terminated:
 		status.EndTime = time.Now().Unix()
-		break
 	case Unknown:
 		status.EndTime = -2
-		break
 	}
 
 	status.State = state
 	f, _ := os.Create(status.Config.StatusFilePath())
 	txt, _ := json.Marshal(status)
-	_, _ = fmt.Fprintln(f, string(txt))
+	fmt.Fprintln(f, string(txt))
 }
 
 func endTime(status *Status) string {
@@ -134,4 +130,3 @@ func (status *Status) Report() {
 		}
 	}
 }
-

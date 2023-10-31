@@ -2,7 +2,7 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"encoding/csv"
@@ -18,13 +18,16 @@ import (
 	"strings"
 )
 
+var VERSION = "private build"
+
 type CommandType string
 
 const (
-	CMD_START  CommandType = "start"
-	CMD_STOP   CommandType = "stop"
-	CMD_STATUS CommandType = "status"
-	CMD_REPORT CommandType = "report"
+	CMD_START     CommandType = "start"
+	CMD_STOP      CommandType = "stop"
+	CMD_STATUS    CommandType = "status"
+	CMD_REPORT    CommandType = "report"
+	CMD_UNDEFINED CommandType = "undefined"
 )
 
 type Config struct {
@@ -34,7 +37,7 @@ type Config struct {
 	csv            bool
 	skipfs         []string
 	root           string
-	command        CommandType
+	Command        CommandType
 	cookie         string
 	wait           bool
 	logdir         string
@@ -52,41 +55,30 @@ func (c *Config) StatusFilePath() string {
 	return path.Join(c.logdir, "jdowser.status")
 }
 
-func InitConfig() *Config {
-	config := Config{}
+type GivenFlags struct {
+	OutJson  bool
+	OutCsv   bool
+	Root     string
+	SkipFs   string
+	NoJVMRun bool
+	Wait     bool
+	Version  bool
+}
+
+func InitConfig(givenFlags GivenFlags) *Config {
+	config := Config{
+		Command: CMD_UNDEFINED,
+	}
 	config.libjvmFileName = getLibJVMFileName()
 
-	outjson := flag.Bool("json", false, "dump output in JSON format")
-	outcsv := flag.Bool("csv", false, "dump output in CSV format")
-	root := flag.String("root", "/", "root scan directory")
-	skipfs := flag.String("skipfs", "nfs,tmp,proc", "list of filesystem types to skip.")
-	nojvmrun := flag.Bool("nojvmrun", false, "do not run java -version to detect version")
-	wait := flag.Bool("wait", false, "wait completion of scan process")
-	version := flag.Bool("version", false, "show version and exit")
-
-	flag.Usage = func() {
-		name := filepath.Base(os.Args[0])
-		fmt.Println(name, "- Utility to find JVMs/JDKs and report their versions")
-		fmt.Println("Version:", VERSION)
-		fmt.Println()
-		fmt.Printf("Usage: %s [-json|-csv] [-skipfs=fstype[,fstype..]] [-nojvmrun] [-wait] [-root=<scanroot>] %s\n", name, CMD_START)
-		fmt.Printf("       %s [-json|-csv] [-wait] %s\n", name, CMD_STATUS)
-		fmt.Printf("       %s [-json|-csv] [-wait] %s\n", name, CMD_REPORT)
-		fmt.Printf("       %s [-json|-csv] %s\n", name, CMD_STOP)
-		fmt.Printf("       %s [-json|-csv] -version\n", name)
-		flag.PrintDefaults()
-	}
-
-	flag.Parse()
-
-	if *version {
-		if *outjson {
+	if givenFlags.Version {
+		if givenFlags.OutJson {
 			type Version struct {
 				Version string `json:"version"`
 			}
 			txt, _ := json.Marshal(Version{VERSION})
 			fmt.Println(string(txt))
-		} else if *outcsv {
+		} else if givenFlags.OutCsv {
 			w := csv.NewWriter(os.Stdout)
 			w.Write([]string{"version", VERSION})
 			w.Flush()
@@ -101,25 +93,27 @@ func InitConfig() *Config {
 		return nil
 	}
 
-	config.command = CommandType(flag.Arg(0))
+	if flag.Arg(0) != "" {
+		config.Command = CommandType(flag.Arg(0))
+	}
 
 	allowedChars := regexp.MustCompile(`^[a-z,]+$`).MatchString
-	if *skipfs != "" && !allowedChars(*skipfs) {
-		fmt.Println("Error: bad -skipfs parameter:", *skipfs)
+	if givenFlags.SkipFs != "" && !allowedChars(givenFlags.SkipFs) {
+		fmt.Println("Error: bad -skipfs parameter:", givenFlags.SkipFs)
 		os.Exit(1)
 	}
 
-	for _, fs := range strings.Split(*skipfs, ",") {
+	for _, fs := range strings.Split(givenFlags.SkipFs, ",") {
 		if fs != "" {
 			config.skipfs = append(config.skipfs, fs)
 		}
 	}
 
-	config.nojvmrun = *nojvmrun
-	config.json = *outjson
-	config.csv = *outcsv
-	config.root = *root
-	config.wait = *wait
+	config.nojvmrun = givenFlags.NoJVMRun
+	config.json = givenFlags.OutJson
+	config.csv = givenFlags.OutCsv
+	config.root = givenFlags.Root
+	config.wait = givenFlags.Wait
 
 	u, err := user.Current()
 	checkError(err)
@@ -156,4 +150,3 @@ func getLibJVMFileName() string {
 		return "libjvm.so"
 	}
 }
-

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"golang.org/x/sys/unix"
