@@ -31,28 +31,28 @@ const (
 )
 
 type Config struct {
-	libjvmFileName string
-	nojvmrun       bool
-	json           bool
-	csv            bool
-	skipfs         []string
-	root           string
+	LibJVMFileName string
+	NoJVMRun       bool
+	Json           bool
+	CSV            bool
+	SkipFs         []string
+	Root           string
 	Command        CommandType
-	cookie         string
-	wait           bool
-	logdir         string
+	Cookie         string
+	Wait           bool
+	LogDir         string
 }
 
 func (c *Config) OutputFilePath() string {
-	return path.Join(c.logdir, "jdowser.out")
+	return path.Join(c.LogDir, "jdowser.out")
 }
 
 func (c *Config) ErrorFilePath() string {
-	return path.Join(c.logdir, "jdowser.err")
+	return path.Join(c.LogDir, "jdowser.err")
 }
 
 func (c *Config) StatusFilePath() string {
-	return path.Join(c.logdir, "jdowser.status")
+	return path.Join(c.LogDir, "jdowser.status")
 }
 
 type GivenFlags struct {
@@ -69,7 +69,7 @@ func InitConfig(givenFlags GivenFlags) *Config {
 	config := Config{
 		Command: CMD_UNDEFINED,
 	}
-	config.libjvmFileName = getLibJVMFileName()
+	config.LibJVMFileName = getLibJVMFileName()
 
 	if givenFlags.Version {
 		if givenFlags.OutJson {
@@ -105,15 +105,15 @@ func InitConfig(givenFlags GivenFlags) *Config {
 
 	for _, fs := range strings.Split(givenFlags.SkipFs, ",") {
 		if fs != "" {
-			config.skipfs = append(config.skipfs, fs)
+			config.SkipFs = append(config.SkipFs, fs)
 		}
 	}
 
-	config.nojvmrun = givenFlags.NoJVMRun
-	config.json = givenFlags.OutJson
-	config.csv = givenFlags.OutCsv
-	config.root = givenFlags.Root
-	config.wait = givenFlags.Wait
+	config.NoJVMRun = givenFlags.NoJVMRun
+	config.Json = givenFlags.OutJson
+	config.CSV = givenFlags.OutCsv
+	config.Root = givenFlags.Root
+	config.Wait = givenFlags.Wait
 
 	u, err := user.Current()
 	checkError(err)
@@ -121,13 +121,13 @@ func InitConfig(givenFlags GivenFlags) *Config {
 	h, err := os.Hostname()
 	checkError(err)
 
-	config.cookie = fmt.Sprintf("SCANJVM_COOKIE=%s", u.Username)
+	config.Cookie = fmt.Sprintf("SCANJVM_COOKIE=%s", u.Username)
 
 	cacheDir, err := os.UserCacheDir()
 	checkError(err)
 
-	config.logdir = path.Join(cacheDir, "jdowser", h, u.Username)
-	err = os.MkdirAll(config.logdir, 0700)
+	config.LogDir = path.Join(cacheDir, "jdowser", h, u.Username)
+	err = os.MkdirAll(config.LogDir, 0700)
 	checkError(err)
 
 	return &config

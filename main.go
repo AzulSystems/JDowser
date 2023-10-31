@@ -22,16 +22,6 @@ func main() {
 	wait := flag.Bool("wait", false, "wait completion of scan process")
 	version := flag.Bool("version", false, "show version and exit")
 
-	givenFlags := jdowser.GivenFlags{
-		OutJson:  *outjson,
-		OutCsv:   *outcsv,
-		Root:     *root,
-		SkipFs:   *skipfs,
-		NoJVMRun: *nojvmrun,
-		Wait:     *wait,
-		Version:  *version,
-	}
-
 	flag.Usage = func() {
 		name := filepath.Base(os.Args[0])
 		fmt.Println(name, "- Utility to find JVMs/JDKs and report their versions")
@@ -46,6 +36,16 @@ func main() {
 	}
 
 	flag.Parse()
+
+	givenFlags := jdowser.GivenFlags{
+		OutJson:  *outjson,
+		OutCsv:   *outcsv,
+		Root:     *root,
+		SkipFs:   *skipfs,
+		NoJVMRun: *nojvmrun,
+		Wait:     *wait,
+		Version:  *version,
+	}
 
 	config := jdowser.InitConfig(givenFlags)
 

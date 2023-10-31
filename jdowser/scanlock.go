@@ -5,9 +5,10 @@
 package jdowser
 
 import (
-	"golang.org/x/sys/unix"
 	"os"
 	"path"
+
+	"golang.org/x/sys/unix"
 )
 
 type FLock struct {
@@ -17,7 +18,7 @@ type FLock struct {
 
 func ScanLock(config *Config) (*FLock, error) {
 	return &FLock{
-		path.Join(config.logdir, ".lck"),
+		path.Join(config.LogDir, ".lck"),
 		nil,
 	}, nil
 }

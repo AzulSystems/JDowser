@@ -105,11 +105,11 @@ func endTime(status *Status) string {
 }
 
 func (status *Status) Report() {
-	if status.Config.json {
+	if status.Config.Json {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		_ = enc.Encode(status)
-	} else if status.Config.csv {
+	} else if status.Config.CSV {
 		w := csv.NewWriter(os.Stdout)
 		w.Write([]string{"host", "state", "start_time", "end_time", "args"})
 		w.Write([]string{

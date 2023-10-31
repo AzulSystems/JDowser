@@ -14,7 +14,7 @@ import (
 )
 
 func CmdReport(config *Config) {
-	if config.wait {
+	if config.Wait {
 		lock, e := ScanLock(config)
 		if e != nil {
 			fmt.Println(e.Error())
@@ -36,7 +36,7 @@ func CmdReport(config *Config) {
 	defer closeFile(f)
 
 	if fileIsEmpty(f) {
-		if config.json {
+		if config.Json {
 			fmt.Println("[]")
 		} else {
 			fmt.Println("No results found")
@@ -48,7 +48,7 @@ func CmdReport(config *Config) {
 
 	scanner := bufio.NewScanner(f)
 
-	if config.json {
+	if config.Json {
 		aw := NewJSONArrayWriter(os.Stdout)
 		defer aw.Close()
 		enc := json.NewEncoder(aw)
@@ -58,7 +58,7 @@ func CmdReport(config *Config) {
 				_ = enc.Encode(info)
 			}
 		}
-	} else if config.csv {
+	} else if config.CSV {
 		DumpCSVHeader(os.Stdout)
 		for scanner.Scan() {
 			if info, e := unmarshalInfo(scanner.Bytes(), inUseLibJVM); e == nil {
@@ -93,10 +93,10 @@ func unmarshalInfo(bytes []byte, inUseLibJVM map[string]int) (*JVMInstallation, 
 func CmdStart(config *Config) {
 	cookie := os.Getenv("SCANJVM_COOKIE")
 
-	_ = os.Setenv("LC_ALL", "C")
-	_ = os.Setenv("SCANJVM_COOKIE", strings.Split(config.cookie, "=")[1])
+	os.Setenv("LC_ALL", "C")
+	os.Setenv("SCANJVM_COOKIE", strings.Split(config.Cookie, "=")[1])
 
-	if !config.wait && cookie == "" {
+	if !config.Wait && cookie == "" {
 		signals := make(chan os.Signal, 1)
 		started := make(chan bool, 1)
 		signal.Notify(signals, syscall.SIGUSR1)
@@ -157,7 +157,7 @@ func CmdStart(config *Config) {
 	if e = lock.TryLock(); e != nil {
 		// Another scan is in progress
 		reportStatus()
-		if config.wait {
+		if config.Wait {
 			_ = lock.Lock()
 			reportStatus()
 		}
@@ -198,7 +198,7 @@ func CmdStart(config *Config) {
 		status.SetState(Finished)
 	}
 
-	if config.wait {
+	if config.Wait {
 		status.Report()
 	}
 }
@@ -210,7 +210,7 @@ func CmdStatus(config *Config) {
 		return
 	}
 
-	if config.wait {
+	if config.Wait {
 		e = lock.Lock()
 	} else {
 		e = lock.TryLock()
@@ -252,7 +252,7 @@ func CmdStop(config *Config) {
 			}
 			envFile := path.Join("/proc", pidStr, "environ")
 			processStringsFromFile(envFile, 0, math.MaxInt64, func(str string) bool {
-				if strings.HasPrefix(str, config.cookie) {
+				if strings.HasPrefix(str, config.Cookie) {
 					syscall.Kill(pid, syscall.SIGTERM)
 					return false
 				}

@@ -89,7 +89,7 @@ func InitJVMInstallation(libjvm string, config *Config) *JVMInstallation {
 	}
 
 	for {
-		if !config.nojvmrun && inst.JavaHome != "" && readVersionInfoFromOutput(&inst) {
+		if !config.NoJVMRun && inst.JavaHome != "" && readVersionInfoFromOutput(&inst) {
 			break
 		}
 		if readVersionInfoFromStrings(&inst) {

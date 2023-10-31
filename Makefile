@@ -2,6 +2,11 @@
 # Use of this source code is governed by the 3-Clause BSD
 # license that can be found in the LICENSE file.
 
+# ./jdowser start
+# ./jdowser -json report > output_file.json
+# ./jdowser -csv report > output_file.csv
+
+
 build-dist:
 	rm -rf dist 
 	GOOS=linux GOARCH=amd64 go build -o dist/jdowser_linux main.go
