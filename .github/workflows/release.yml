@@ -1,28 +1,35 @@
-name: Generate release-artifacts
+name: goreleaser
 
 on:
-  release:
-    types: 
-        - created
+    release:
+      types: 
+          - created
+  
+
+permissions:
+  contents: write
 
 jobs:
-  generate:
-    name: Generate cross-platform builds
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
-      - name: Generate build files
-        uses: thatisuday/go-cross-build@v1
+      -
+        name: Checkout
+        uses: actions/checkout@v4
         with:
-            platforms: 'linux/amd64, darwin/amd64, windows/amd64'
-            package: ''
-            name: 'jdowser'
-            compress: 'true'
-            dest: 'dist'
-
-
-
-
-
-
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
