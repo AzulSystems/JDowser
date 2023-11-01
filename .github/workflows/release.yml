@@ -32,10 +32,5 @@ jobs:
         env:
           CGO_ENABLED: 0
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          goos:
-            linux
-            windows
-            darwin
-          goarch:
-            amd64
-            arm64
+          goos: linux, windows, darwin
+          goarch: amd64, arm64
