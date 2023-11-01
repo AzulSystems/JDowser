@@ -1,3 +1,4 @@
+# https://goreleaser.com/customization/builds/
 name: goreleaser
 
 on:
@@ -25,11 +26,16 @@ jobs:
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
           args: release --clean
         env:
+          CGO_ENABLED: 0
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
-          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+          goos:
+            linux
+            windows
+            darwin
+          goarch:
+            amd64
+            arm64
