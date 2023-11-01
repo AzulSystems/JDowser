@@ -251,7 +251,7 @@ func CmdStop(config *Config) {
 				continue
 			}
 			envFile := path.Join("/proc", pidStr, "environ")
-			processStringsFromFile(envFile, 0, math.MaxInt32, func(str string) bool {
+			processStringsFromFile(envFile, 0, math.MaxInt64, func(str string) bool {
 				if strings.HasPrefix(str, config.Cookie) {
 					syscall.Kill(pid, syscall.SIGTERM)
 					return false
