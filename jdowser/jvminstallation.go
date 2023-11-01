@@ -2,7 +2,7 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"archive/zip"
@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -63,7 +62,9 @@ func InitJVMInstallation(libjvm string, config *Config) *JVMInstallation {
 		if _, err := os.Stat(path.Join(inst.JavaHome, "bin/javac")); err == nil || os.IsExist(err) {
 			inst.IsJDK = true
 		}
+
 		var found bool
+
 		wf := func(p string, info os.FileInfo, err error) error {
 			if found {
 				return filepath.SkipDir
@@ -84,11 +85,11 @@ func InitJVMInstallation(libjvm string, config *Config) *JVMInstallation {
 			return nil
 		}
 
-		_ = filepath.Walk(inst.JavaHome, wf)
+		filepath.Walk(inst.JavaHome, wf)
 	}
 
 	for {
-		if !config.nojvmrun && inst.JavaHome != "" && readVersionInfoFromOutput(&inst) {
+		if !config.NoJVMRun && inst.JavaHome != "" && readVersionInfoFromOutput(&inst) {
 			break
 		}
 		if readVersionInfoFromStrings(&inst) {
@@ -122,20 +123,20 @@ func md5sum(path string) (string, error) {
 }
 
 func (inst *JVMInstallation) Dump(out *os.File) {
-	_, _ = fmt.Fprintln(out, "host:", inst.Host)
-	_, _ = fmt.Fprintln(out, "libjvm:", inst.LibJVM)
-	_, _ = fmt.Fprintln(out, "libjvm_hash:", inst.LibJVMHash)
-	_, _ = fmt.Fprintln(out, "java_home:", inst.JavaHome)
-	_, _ = fmt.Fprintln(out, "is_jdk:", inst.IsJDK)
-	_, _ = fmt.Fprintln(out, "java_version:", inst.VersionInfo.Version)
-	_, _ = fmt.Fprintln(out, "java_runtime_name:", inst.VersionInfo.RuntimeName)
-	_, _ = fmt.Fprintln(out, "java_runtime_version:", inst.VersionInfo.RuntimeVersion)
-	_, _ = fmt.Fprintln(out, "java_runtime_vendor:", inst.VersionInfo.RuntimeVendor)
-	_, _ = fmt.Fprintln(out, "java_vm_name:", inst.VersionInfo.VMName)
-	_, _ = fmt.Fprintln(out, "java_vm_version:", inst.VersionInfo.VMVersion)
-	_, _ = fmt.Fprintln(out, "java_vm_vendor:", inst.VersionInfo.VMVendor)
-	_, _ = fmt.Fprintln(out, "running_instances:", inst.RunningInstances)
-	_, _ = fmt.Fprintln(out)
+	fmt.Fprintln(out, "host:", inst.Host)
+	fmt.Fprintln(out, "libjvm:", inst.LibJVM)
+	fmt.Fprintln(out, "libjvm_hash:", inst.LibJVMHash)
+	fmt.Fprintln(out, "java_home:", inst.JavaHome)
+	fmt.Fprintln(out, "is_jdk:", inst.IsJDK)
+	fmt.Fprintln(out, "java_version:", inst.VersionInfo.Version)
+	fmt.Fprintln(out, "java_runtime_name:", inst.VersionInfo.RuntimeName)
+	fmt.Fprintln(out, "java_runtime_version:", inst.VersionInfo.RuntimeVersion)
+	fmt.Fprintln(out, "java_runtime_vendor:", inst.VersionInfo.RuntimeVendor)
+	fmt.Fprintln(out, "java_vm_name:", inst.VersionInfo.VMName)
+	fmt.Fprintln(out, "java_vm_version:", inst.VersionInfo.VMVersion)
+	fmt.Fprintln(out, "java_vm_vendor:", inst.VersionInfo.VMVendor)
+	fmt.Fprintln(out, "running_instances:", inst.RunningInstances)
+	fmt.Fprintln(out)
 }
 
 func (inst *JVMInstallation) DumpCSV(out *os.File) {
@@ -390,7 +391,7 @@ func extractVersionClass(filename string) ([]byte, error) {
 			if err != nil {
 				log.Fatal("Error reading archive entry")
 			}
-			data, err = ioutil.ReadAll(fc)
+			data, err = io.ReadAll(fc)
 			_ = fc.Close()
 			if err != nil {
 				return nil, err
@@ -402,4 +403,3 @@ func extractVersionClass(filename string) ([]byte, error) {
 
 	return nil, errors.New("entry sun/misc/Version.class not found")
 }
-

@@ -2,11 +2,12 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"fmt"
 	"log"
+	
 )
 
 type ConstantPool []ConstantPoolEntry
@@ -337,7 +338,7 @@ func (e *ConstantUtf8Entry) Read(r *ClassFileReader) int {
 }
 
 func (e *ConstantUtf8Entry) String() string {
-	return fmt.Sprintf("%s", e.bytes)
+	return string(e.bytes)
 }
 
 func (e *ConstantMethodHandleEntry) Read(r *ClassFileReader) int {

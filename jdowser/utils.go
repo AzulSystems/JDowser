@@ -2,12 +2,11 @@
 // Use of this source code is governed by the 3-Clause BSD
 // license that can be found in the LICENSE file.
 
-package main
+package jdowser
 
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -51,9 +50,9 @@ func (w *JSONArrayWriter) Close() {
 }
 
 func findFiles(config *Config, callback func(fname string)) error {
-	command := []string{config.root}
-	l := len(config.skipfs)
-	fs := &config.skipfs
+	command := []string{config.Root}
+	l := len(config.SkipFs)
+	fs := &config.SkipFs
 	if l > 0 {
 		command = append(command, "(")
 		for i := 0; i < l-1; i++ {
@@ -61,7 +60,7 @@ func findFiles(config *Config, callback func(fname string)) error {
 		}
 		command = append(command, "-fstype", (*fs)[l-1], ")", "-prune", "-o")
 	}
-	command = append(command, "-xdev", "-type", "f", "-name", config.libjvmFileName, "-print")
+	command = append(command, "-xdev", "-type", "f", "-name", config.LibJVMFileName, "-print")
 
 	cmd := exec.Command("find", command...)
 
@@ -107,7 +106,7 @@ func fileIsEmpty(f *os.File) bool {
 func findInUseLibJVM() map[string]int {
 	res := make(map[string]int)
 
-	procDir, e := ioutil.ReadDir("/proc")
+	procDir, e := os.ReadDir("/proc")
 	if e != nil {
 		return res
 	}

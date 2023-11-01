@@ -25,18 +25,14 @@ The application is written in Golang, so you need to have a Golang package [inst
 To build JDowser:
 
 1. Clone the JDowser project from the GitHub repository.
-2. In your terminal, `cd` to the JDowser project directory.
-3. Run `make`:
+2. In your terminal run `make build-dist`:
    ```shell
-   $ make
+   $ make build-dist
    ```
-   This generates the `jdowser` executable file.
+   This will generate the `jdowser` executable file in the `dist` folder.
 
-4. (Optional) If you observe dependency errors, run:
-   ```shell
-   $ make resolve; \
-   make
-   ```
+You can also use the already built binaries from the **Releases** section.
+
 
 ## JDowser usage
 
@@ -77,9 +73,19 @@ If you specify this parameter, the default values are ignored.
 
 ## Sample JDowser run
 
+Start scanning filesystem, this will run in background.
+
 ```shell
 $ ./jdowser -root=/opt start
 ```
+
+Or
+
+```shell
+$ ./jdowser start
+```
+
+Get scanning status Running/Finished.
 
 ```shell
 $ ./jdowser status
@@ -90,6 +96,8 @@ start_time: 2020-08-28 12:08:51 -0700 PDT
 end_time: -1
 args: -root=/opt
 ```
+
+You can output the status to json format
 
 ```shell
 $ ./jdowser -json status
@@ -104,6 +112,8 @@ $ ./jdowser -json status
   ]
 }
 ```
+
+And, finally you can get a report simple (as below) in json or csv format. 
 
 ```shell
 $ ./jdowser report
@@ -120,6 +130,12 @@ java_runtime_vendor: Azul Systems, Inc.
 java_vm_name: OpenJDK 64-Bit Server VM
 java_vm_version: 11.0.7+10-LTS
 java_vm_vendor: Azul Systems, Inc.
+```
+
+These commands will save data into specified files:
+```shell
+$ ./jdowser -json report > output_file.json
+$ ./jdowser -csv report > output_file.csv
 ```
 
 
