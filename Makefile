@@ -3,13 +3,13 @@
 # license that can be found in the LICENSE file.
 
 # ./jdowser start
+# ./jdowser status
 # ./jdowser -json report > output_file.json
 # ./jdowser -csv report > output_file.csv
 
 
 build-dist:
 	rm -rf dist 
-	GOOS=linux GOARCH=amd64 go build -o dist/jdowser_linux main.go
-	GOOS=darwin GOARCH=amd64 go build -o dist/jdowser_mac main.go
-	GOOS=windows GOARCH=amd64 go build -o dist/jdowser_windows.exe main.go
+	CGO_ENABLED=0 go build -o dist/jdowser main.go
+	cp ansible-jdowser dist/ansible-jdowser.sh
 
