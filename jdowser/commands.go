@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
 	"path"
@@ -243,6 +242,8 @@ func CmdStop(config *Config) {
 		return
 	}
 
+	maxInt64 := (1 << 63) - 1
+
 	for _, entry := range procDir {
 		if entry.IsDir() {
 			pidStr := entry.Name()
@@ -251,7 +252,7 @@ func CmdStop(config *Config) {
 				continue
 			}
 			envFile := path.Join("/proc", pidStr, "environ")
-			processStringsFromFile(envFile, 0, math.MaxInt64, func(str string) bool {
+			processStringsFromFile(envFile, 0, maxInt64, func(str string) bool {
 				if strings.HasPrefix(str, config.Cookie) {
 					syscall.Kill(pid, syscall.SIGTERM)
 					return false
